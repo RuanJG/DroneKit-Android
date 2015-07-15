@@ -48,7 +48,7 @@
 
     <TableLayout
         android:layout_width="fill_parent"
-        android:layout_height="200dp"
+        android:layout_height="fill_parent"
         android:layout_below="@+id/telemetryLabel"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
@@ -161,10 +161,116 @@
                 android:paddingBottom="5dp"
                 android:layout_gravity="left" />
         </TableRow>
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/vehTelemRow5">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Roll:"
+                android:id="@+id/rcRollTextView"
+                android:layout_column="0"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="0"
+                android:id="@+id/rcRollValueTextView"
+                android:layout_column="1"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_gravity="left" />
+        </TableRow>
 
         <TableRow
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"></TableRow>
+            android:layout_height="fill_parent"
+            android:id="@+id/vehTelemRow6">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Pitch:"
+                android:id="@+id/rcPitchTextView"
+                android:layout_column="0"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="0"
+                android:id="@+id/rcPitchValueTextView"
+                android:layout_column="1"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_gravity="left" />
+        </TableRow>
+
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/vehTelemRow7">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Thr:"
+                android:id="@+id/rcThrTextView"
+                android:layout_column="0"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="0"
+                android:id="@+id/rcThrValueTextView"
+                android:layout_column="1"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_gravity="left" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/vehTelemRow8">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Yaw:"
+                android:id="@+id/rcYawTextView"
+                android:layout_column="0"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="0"
+                android:id="@+id/rcYawValueTextView"
+                android:layout_column="1"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_gravity="left" />
+        </TableRow>
+
+
 
         <TableRow
             android:layout_width="fill_parent"
@@ -181,6 +287,15 @@
                 android:visibility="invisible"
                 android:onClick="onArmButtonTap" />
         </TableRow>
+        <Button
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnDebug"
+            android:layout_below="@+id/btnArmTakeOff"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_column="1"
+            android:onClick="onDebugButtonTap" />
 
     </TableLayout>
 

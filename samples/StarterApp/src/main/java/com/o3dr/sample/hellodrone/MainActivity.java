@@ -1,10 +1,12 @@
 package com.o3dr.sample.hellodrone;
 
 import android.content.Context;
+import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -29,6 +31,8 @@ import com.o3dr.services.android.lib.drone.connection.ConnectionType;
 import com.o3dr.services.android.lib.drone.property.Altitude;
 import com.o3dr.services.android.lib.drone.property.Gps;
 import com.o3dr.services.android.lib.drone.property.Home;
+import com.o3dr.services.android.lib.drone.property.Parameter;
+import com.o3dr.services.android.lib.drone.property.Parameters;
 import com.o3dr.services.android.lib.drone.property.Speed;
 import com.o3dr.services.android.lib.drone.property.State;
 import com.o3dr.services.android.lib.drone.property.Type;
@@ -37,6 +41,7 @@ import com.o3dr.services.android.lib.model.AbstractCommandListener;
 import com.o3dr.services.android.lib.model.SimpleCommandListener;
 
 import java.util.List;
+
 
 
 public class MainActivity extends ActionBarActivity implements DroneListener, TowerListener {
@@ -53,6 +58,15 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
 
     Spinner modeSelector;
 
+    TextView yawValueTextview;
+    TextView thrValueTextview;
+    TextView rollValueTextview;
+    TextView pitchValueTextview;
+
+    private  Handler mHandler;
+    private JgRcOutput mRcOutput;
+    private Parameters droneParams;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +75,30 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         final Context context = getApplicationContext();
         this.controlTower = new ControlTower(context);
         this.drone = new Drone(context);
+
+
+        yawValueTextview = (TextView) findViewById(R.id.rcYawValueTextView);
+        pitchValueTextview = (TextView) findViewById(R.id.rcPitchValueTextView);
+        thrValueTextview = (TextView) findViewById(R.id.rcThrValueTextView);
+        rollValueTextview = (TextView) findViewById(R.id.rcRollValueTextView);
+
+        mHandler = new Handler(){
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                case JgRcOutput.ALLID:
+                    yawValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.YAWID));
+                    pitchValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.PITCHID));
+                    thrValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.THRID));
+                    rollValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.ROLLID));
+                    break;
+                default:
+                    alertUser("unknow msg frome rcoutput");
+                    break;
+                }
+                super.handleMessage(msg);
+            }
+        };
+        mRcOutput = new JgRcOutput(drone,context,mHandler);
 
         this.modeSelector = (Spinner)findViewById(R.id.modeSelect);
         this.modeSelector.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
@@ -76,6 +114,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         });
     }
 
+
     @Override
     public void onStart() {
         super.onStart();
@@ -84,6 +123,56 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        debugMsg("a key down:" + keyCode);
+        int rc;
+        switch (keyCode){
+            case KeyEvent.KEYCODE_W:
+                //thr up
+                rc = mRcOutput.getRcById(JgRcOutput.THRID);
+                rc += 10;
+                if( rc < JgRcOutput.MIN_RC_VALUE ) rc = JgRcOutput.MIN_RC_VALUE ;
+                if( rc > JgRcOutput.MAX_RC_VALUE) rc = JgRcOutput.MAX_RC_VALUE;
+                mRcOutput.setRcById(JgRcOutput.THRID,(short)rc);
+                break;
+            case KeyEvent.KEYCODE_S:
+                //thr down
+                rc = mRcOutput.getRcById(JgRcOutput.THRID);
+                rc -= 10;
+                if( rc < JgRcOutput.MIN_RC_VALUE ) rc = JgRcOutput.MIN_RC_VALUE;
+                mRcOutput.setRcById(JgRcOutput.THRID,(short)rc);
+                break;
+            case KeyEvent.KEYCODE_A:
+                //yaw sub
+                break;
+            case KeyEvent.KEYCODE_D:
+                //yaw add
+                break;
+            case KeyEvent.KEYCODE_4:
+                //pitch add
+                break;
+            case KeyEvent.KEYCODE_2:
+                //pitch sub
+                break;
+            case KeyEvent.KEYCODE_1:
+                //roll sub
+                break;
+            case KeyEvent.KEYCODE_3:
+                //roll add
+                break;
+            default:
+                break;
+
+        }
+        return super.onKeyDown(keyCode,event);
+    }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        debugMsg("a key up:" + keyCode);
+        return super.onKeyUp(keyCode,event);
+    }
+
+        @Override
     public void onStop() {
         super.onStop();
         if (this.drone.isConnected()) {
@@ -121,12 +210,14 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 alertUser("Drone Connected");
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
+                //VehicleApi.getApi(drone).refreshParameters();
                 break;
 
             case AttributeEvent.STATE_DISCONNECTED:
                 alertUser("Drone Disconnected");
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
+                mRcOutput.stop();
                 break;
 
             case AttributeEvent.STATE_UPDATED:
@@ -158,6 +249,16 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 updateDistanceFromHome();
                 break;
 
+            case AttributeEvent.PARAMETERS_REFRESH_COMPLETED:
+                if(!mRcOutput.isStarted())
+                    mRcOutput.start();
+                alertUser("Parameter update ok");
+                break;
+
+            //case AttributeEvent.PARAMETER_RECEIVED:
+                //initDefaultRc();
+                //alertUser("Parameter RECEIVED");
+             //   break;
 
 
             default:
@@ -166,6 +267,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         }
 
     }
+
 
     @Override
     public void onDroneConnectionFailed(ConnectionResult result) {
@@ -220,6 +322,11 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 alertUser("Vehicle mode change timed out.");
             }
         });
+    }
+
+    public  void onDebugButtonTap(View view){
+        VehicleApi.getApi(drone).refreshParameters();
+        alertUser("Start refresh Params");
     }
 
     public void onArmButtonTap(View view) {
@@ -357,12 +464,18 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         this.modeSelector.setSelection(arrayAdapter.getPosition(vehicleMode));
     }
 
+
+
+
     // Helper methods
     // ==========================================================
 
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
         Log.d(TAG, message);
+    }
+    protected void debugMsg(String msg){
+        Log.d(TAG, msg);
     }
 
     protected double distanceBetweenPoints(LatLongAlt pointA, LatLongAlt pointB) {
