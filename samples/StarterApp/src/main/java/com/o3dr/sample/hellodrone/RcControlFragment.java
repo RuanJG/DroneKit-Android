@@ -40,15 +40,21 @@ public class RcControlFragment extends Fragment {
                 return;
             }
             switch (msg.what) {
+                case JgRcOutput.DRONE_ERROR:
+                    stopRcLoop();
+                    alertUser("Drone has something bad status, RcOutput exit");
                 case JgRcOutput.ALLID:
                     SeekBar thr = (SeekBar)getActivity().findViewById(R.id.thrBar);
-                    if( thr!=null && mRcOutput!=null) thr.setProgress(mRcOutput.getRcById(JgRcOutput.THRID));
+                    if( thr!=null && mRcOutput!=null) thr.setProgress(mRcOutput.getRcById(JgRcOutput.THRID)-1000);
+
                     SeekBar yaw = (SeekBar)getActivity().findViewById(R.id.yawBar);
-                    if( thr!=null && mRcOutput!=null) thr.setProgress(mRcOutput.getRcById(JgRcOutput.YAWID));
+                    if( yaw!=null && mRcOutput!=null) yaw.setProgress(mRcOutput.getRcById(JgRcOutput.YAWID)-1000);
+
                     SeekBar roll = (SeekBar)getActivity().findViewById(R.id.rollBar);
-                    if( thr!=null && mRcOutput!=null) thr.setProgress(mRcOutput.getRcById(JgRcOutput.ROLLID));
+                    if( roll!=null && mRcOutput!=null) roll.setProgress(mRcOutput.getRcById(JgRcOutput.ROLLID)-1000);
+
                     SeekBar pitch = (SeekBar)getActivity().findViewById(R.id.pitchBar);
-                    if( thr!=null && mRcOutput!=null) thr.setProgress(mRcOutput.getRcById(JgRcOutput.PITCHID));
+                    if( pitch!=null && mRcOutput!=null) pitch.setProgress(mRcOutput.getRcById(JgRcOutput.PITCHID)-1000);
                     break;
                 default:
                     alertUser("unknow msg frome rcoutput");
@@ -106,6 +112,8 @@ public class RcControlFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        stopRcLoop();
+        mDrone = null;
         alertUser("onDetach");
     }
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -117,6 +125,7 @@ public class RcControlFragment extends Fragment {
                 onSwitchClick();
             }
         });
+
     }
 
 
@@ -129,6 +138,7 @@ public class RcControlFragment extends Fragment {
             if (startRcLoop()) {
                 alertUser("start Rc Running");
             } else {
+                mSwitch.setChecked(false);
                 alertUser("Rc Start failed , Ensure Connected");
             }
         }else {
@@ -196,12 +206,12 @@ public class RcControlFragment extends Fragment {
             if( mRcOutput.stop() ) {
                 mRcOutput = null;
                 alertUser("Rc Sending Stoped");
-                return true;
             }else{
+                alertUser("Rc Sending Stoped Faile");
                 mRcOutput = null;
-                return false;
             }
         }
+        mSwitch.setChecked(false);
         return true;
     }
     private boolean isReady() {

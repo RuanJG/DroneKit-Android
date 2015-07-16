@@ -42,10 +42,8 @@ public class JgRcOutput{
     public static final int CHN8ID=7;
     public  static final int ALLID = 8;
 
-    public  static final  int KEY_YAW = YAWID;
-    public  static final  int KEY_THR = THRID;
-    public  static final  int KEY_PITCH = PITCHID;
-    public  static final  int KEY_ROLL = ROLLID;
+    //error msg id
+    public  static final  int DRONE_ERROR = -1;
 
     public static  final String TAG = "JgRcOutput";
 
@@ -129,9 +127,12 @@ public class JgRcOutput{
                             onRcChanged(ALLID);
                             setRcStatusChanged(false);
                         }
+                    }else{
+                        sendErrorMessageToClient(DRONE_ERROR);
                     }
                 }
             }, 0, getDelayMs(), TimeUnit.MILLISECONDS);
+
         }else{
             alertUser("Start RcOutput failed, no Ready");
             return false;
@@ -282,6 +283,14 @@ public class JgRcOutput{
         }
     }
 
+    private void sendErrorMessageToClient(int msgid){
+        if(mClientRcUpdateHandler != null) {
+            Message message = new Message();
+            message.what = msgid;
+            mClientRcUpdateHandler.sendMessage(message);
+        }
+    }
+
     //***************************  get set Rc
     public  String getRcByIdToString(int id){
         return String.valueOf(rcOutputs[id]);
@@ -294,7 +303,9 @@ public class JgRcOutput{
             rcOutputs[id] = rc;
         }else{
             //alertUser("Rc"+id+": set by a bad value="+rc);
-            return false;
+            if( rc > rcParamValue[id][2] ) rcOutputs[id] = rcParamValue[id][2];
+            if( rc < rcParamValue[id][0] ) rcOutputs[id] = rcParamValue[id][0];
+            //return false;
         }
         setRcStatusChanged(true);
         //sendRcMsg();

@@ -1,5 +1,6 @@
 package com.o3dr.sample.hellodrone;
 
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -79,19 +80,10 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         this.drone = new Drone(context);
 
 
-        yawValueTextview = (TextView) findViewById(R.id.rcYawValueTextView);
-        pitchValueTextview = (TextView) findViewById(R.id.rcPitchValueTextView);
-        thrValueTextview = (TextView) findViewById(R.id.rcThrValueTextView);
-        rollValueTextview = (TextView) findViewById(R.id.rcRollValueTextView);
-
         mHandler = new Handler(){
             public void handleMessage(Message msg) {
                 switch (msg.what) {
                 case JgRcOutput.ALLID:
-                    yawValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.YAWID));
-                    pitchValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.PITCHID));
-                    thrValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.THRID));
-                    rollValueTextview.setText(mRcOutput.getRcByIdToString(JgRcOutput.ROLLID));
                     break;
                 default:
                     alertUser("unknow msg frome rcoutput");
@@ -117,8 +109,10 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         });
 
         //**********RcControlFragment
-        mRcControlFragment = new RcControlFragment();
-        addRcControlFragment();
+        //mRcControlFragment = new RcControlFragment();
+        //addRcControlFragment();
+        mRcControlFragment = (RcControlFragment) getFragmentManager().findFragmentById(R.id.rcfrag);
+        hideRcControlFragment();
     }
 
     //*****************************************************************  RcControlFragment
@@ -130,7 +124,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
             return false;
         FragmentManager fm = getFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
-        transaction.add(R.id.controlFragment, mRcControlFragment);
+        //transaction.add(R.id.controlFragment, mRcControlFragment);
         transaction.commit();
         return true;
     }
@@ -247,6 +241,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 alertUser("Drone Connected");
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
+
                 //VehicleApi.getApi(drone).refreshParameters();
                 break;
 
@@ -254,6 +249,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 alertUser("Drone Disconnected");
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
+
                 //mRcOutput.stop();
                 break;
 
@@ -290,6 +286,9 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 //if(!mRcOutput.isStarted())
                    // mRcOutput.start();
                 alertUser("Parameter update ok");
+                //***************
+                Button btn = (Button) findViewById(R.id.btnDebug);
+                btn.setVisibility(View.VISIBLE);
                 break;
 
             //case AttributeEvent.PARAMETER_RECEIVED:
