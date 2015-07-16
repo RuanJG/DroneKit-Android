@@ -1,6 +1,9 @@
 package com.o3dr.sample.hellodrone;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -43,8 +46,7 @@ import com.o3dr.services.android.lib.model.SimpleCommandListener;
 import java.util.List;
 
 
-
-public class MainActivity extends ActionBarActivity implements DroneListener, TowerListener {
+public class MainActivity extends ActionBarActivity implements DroneListener, TowerListener,RcControlFragment.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -65,7 +67,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
 
     private  Handler mHandler;
     private JgRcOutput mRcOutput;
-    private Parameters droneParams;
+    private  RcControlFragment mRcControlFragment =null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +101,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
             }
         };
         mRcOutput = new JgRcOutput(drone,context,mHandler);
+        mRcOutput.setmMode(JgRcOutput.HARDMODE);
 
         this.modeSelector = (Spinner)findViewById(R.id.modeSelect);
         this.modeSelector.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
@@ -112,7 +115,90 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 // Do nothing
             }
         });
+
+        //**********RcControlFragment
+        mRcControlFragment = new RcControlFragment();
+        addRcControlFragment();
     }
+
+    //*****************************************************************  RcControlFragment
+    public boolean isRcControlDisplay(){
+        return mRcControlFragment.isVisible();
+    }
+    private boolean addRcControlFragment(){
+        if(mRcControlFragment == null )
+            return false;
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.add(R.id.controlFragment, mRcControlFragment);
+        transaction.commit();
+        return true;
+    }
+    private boolean displayRcControlFragment(){
+        if(mRcControlFragment == null )
+            return false;
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.show(mRcControlFragment);
+        transaction.commit();
+        return true;
+    }
+    private boolean hideRcControlFragment(){
+        if(mRcControlFragment == null )
+            return false;
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.hide(mRcControlFragment);
+        transaction.commit();
+        return true;
+    }
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+        //call by fragment
+    }
+    @Override
+    public Drone getDone(){
+        return drone;
+    }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if( mRcControlFragment != null &&  mRcControlFragment.onKeyDown(keyCode,event) )
+            return super.onKeyDown(keyCode,event);
+        else
+            return true;
+    }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if( mRcControlFragment != null && mRcControlFragment.onKeyUp(keyCode, event) )
+            return super.onKeyUp(keyCode, event);
+        else
+            return true;
+    }
+
+    public  void onDebugButtonTap(View view){
+        //VehicleApi.getApi(drone).refreshParameters();
+        //alertUser("Start refresh Params");
+        if(isRcControlDisplay())
+            hideRcControlFragment();
+        else
+            displayRcControlFragment();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     @Override
@@ -122,57 +208,8 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         updateVehicleModesForType(this.droneType);
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        debugMsg("a key down:" + keyCode);
-        int rc;
-        switch (keyCode){
-            case KeyEvent.KEYCODE_W:
-                //thr up
-                rc = mRcOutput.getRcById(JgRcOutput.THRID);
-                rc += 10;
-                if( rc < JgRcOutput.MIN_RC_VALUE ) rc = JgRcOutput.MIN_RC_VALUE ;
-                if( rc > JgRcOutput.MAX_RC_VALUE) rc = JgRcOutput.MAX_RC_VALUE;
-                mRcOutput.setRcById(JgRcOutput.THRID,(short)rc);
-                break;
-            case KeyEvent.KEYCODE_S:
-                //thr down
-                rc = mRcOutput.getRcById(JgRcOutput.THRID);
-                rc -= 10;
-                if( rc < JgRcOutput.MIN_RC_VALUE ) rc = JgRcOutput.MIN_RC_VALUE;
-                mRcOutput.setRcById(JgRcOutput.THRID,(short)rc);
-                break;
-            case KeyEvent.KEYCODE_A:
-                //yaw sub
-                break;
-            case KeyEvent.KEYCODE_D:
-                //yaw add
-                break;
-            case KeyEvent.KEYCODE_4:
-                //pitch add
-                break;
-            case KeyEvent.KEYCODE_2:
-                //pitch sub
-                break;
-            case KeyEvent.KEYCODE_1:
-                //roll sub
-                break;
-            case KeyEvent.KEYCODE_3:
-                //roll add
-                break;
-            default:
-                break;
 
-        }
-        return super.onKeyDown(keyCode,event);
-    }
     @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        debugMsg("a key up:" + keyCode);
-        return super.onKeyUp(keyCode,event);
-    }
-
-        @Override
     public void onStop() {
         super.onStop();
         if (this.drone.isConnected()) {
@@ -217,7 +254,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 alertUser("Drone Disconnected");
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
-                mRcOutput.stop();
+                //mRcOutput.stop();
                 break;
 
             case AttributeEvent.STATE_UPDATED:
@@ -250,8 +287,8 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
                 break;
 
             case AttributeEvent.PARAMETERS_REFRESH_COMPLETED:
-                if(!mRcOutput.isStarted())
-                    mRcOutput.start();
+                //if(!mRcOutput.isStarted())
+                   // mRcOutput.start();
                 alertUser("Parameter update ok");
                 break;
 
@@ -324,10 +361,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         });
     }
 
-    public  void onDebugButtonTap(View view){
-        VehicleApi.getApi(drone).refreshParameters();
-        alertUser("Start refresh Params");
-    }
+
 
     public void onArmButtonTap(View view) {
         State vehicleState = this.drone.getAttribute(AttributeType.STATE);
@@ -487,5 +521,7 @@ public class MainActivity extends ActionBarActivity implements DroneListener, To
         double dz = pointA.getAltitude() - pointB.getAltitude();
         return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
+
+
 
 }

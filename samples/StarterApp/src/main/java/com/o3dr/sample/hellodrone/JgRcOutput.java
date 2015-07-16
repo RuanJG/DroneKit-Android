@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class JgRcOutput{
     public static final short INVALID_RC_VALUE = 0;
-    public static final short MAX_RC_VALUE = 2200;
+    public static final short MAX_RC_VALUE = 2000;
     public static final short MIN_RC_VALUE = 1000;
 
     public static final int ROLLID = 0;
@@ -65,6 +65,10 @@ public class JgRcOutput{
 
     private Parameters mParams;
 
+    public static  final  int HARDMODE = 0; // ignore parameter rc value
+    public static  final  int SOFTWAREMODE = 1; //use parameter rc value first
+    private int mMode = SOFTWAREMODE;
+
     public  JgRcOutput(Drone drone, Context context, Handler handler){
         mContext = context;
         mDrone = drone;
@@ -94,6 +98,14 @@ public class JgRcOutput{
     }
     private void setRcStatus(int val){
         mRcStatus = val;
+    }
+
+    public int getmMode() {
+        return mMode;
+    }
+
+    public void setmMode(int mMode) {
+        this.mMode = mMode;
     }
 
     //***************************  Start Stop
@@ -202,7 +214,7 @@ public class JgRcOutput{
         }
         debugMsg("initRcOutput !!");
     }
-    private void setDefaultRc(){
+    private void updateParamRc(){
         int i;
         Parameters droneParams = mDrone.getAttribute(AttributeType.PARAMETERS);
         if (droneParams != null) {
@@ -240,11 +252,24 @@ public class JgRcOutput{
             //use the rcParamValue from init
             alertUser("Parameter is not found for Rc, use default Value");
         }
+    }
+    private void setDefaultRc(){
+        int i;
 
+        if( getmMode() == SOFTWAREMODE) {
+            updateParamRc();
+        }
+// default is a hardware Jostick, use the 1000-2000 rc value
+        //thr , yaw , roll, pitch
         for( i = 0; i<= YAWID; i++) {
             rcOutputs[i] = rcParamValue[i][1];
         }
         rcOutputs[THRID]= rcParamValue[THRID][0]; // thr use the min value
+
+        // rc 5 ~ rc 8
+        for ( i = CHN5ID; i<= CHN8ID; i++ ){
+            rcOutputs[i] = rcParamValue[i][0];
+        }
 
         onRcChanged(ALLID);
         setRcStatus(1);
@@ -285,5 +310,6 @@ public class JgRcOutput{
     private  void debugMsg(String msg){
         Log.d(TAG, msg);
     }
+
 
 }
